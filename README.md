@@ -1,6 +1,8 @@
 ## InfoImprese Scraper Tool
 
-That's a GO porting of the original project which is written in Python 
+That's a GoLang porting of the original project which is written in Python .
+
+You can find the original following this link: https://github.com/debba/infoimprese-scraping-tool
 
 ### Config
 
