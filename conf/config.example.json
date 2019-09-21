@@ -1,0 +1,25 @@
+{
+  "anticaptcha": {
+    "api_key": "",
+    "site_key": ""
+  },
+  "scraper": {
+    "mode": "search_by_name",
+    "fields": [
+      "Denominazione",
+      "Sede legale",
+      "Attività",
+      "Sede operativa",
+      "Indirizzo web",
+      "Posta elettronica",
+      "Commercio elettronico",
+      "Chi siamo",
+      "Cosa facciamo",
+      "Classe di fatturato",
+      "Canali di vendita",
+      "Marchi",
+      "Principali paesi di export",
+      "Certificazioni"
+    ]
+  }
+}
