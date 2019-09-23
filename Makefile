@@ -6,6 +6,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 BINARY_NAME=infoimprese
 BINARY_UNIX=$(BINARY_NAME)_unix
+BINARY_WIN=$(BINARY_NAME).exe
 
 all: test build
 build:
@@ -15,6 +16,7 @@ test:
 clean:
 		$(GOCLEAN)
 		rm -f $(BINARY_NAME)
+		rm -f $(BINARY_WIN)
 		rm -f $(BINARY_UNIX)
 		rm -f *.csv
 run:
@@ -30,5 +32,7 @@ deps:
 # Cross compilation
 build-linux:
 		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
+build-windows:
+		GOOS=windows GOARCH=386 $(GOBUILD) -o $(BINARY_WIN) -v
 docker-build:
 		docker run --rm -it -v "$(GOPATH)":/go -w /go/src/bitbucket.org/rsohlich/makepost golang:latest go build -o "$(BINARY_UNIX)" -v
