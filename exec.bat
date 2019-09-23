@@ -5,8 +5,7 @@ set /P where="Where? "
 set /P filename="Filename "
 set /P mode="Mode "
 
-IF NOT DEFINED sleep SET "sleep=1"
-IF NOT DEFINED filename SET "filename=1"
+IF NOT DEFINED filename SET "filename=export"
 IF NOT DEFINED mode SET "mode=search_by_name"
 
 infoimprese.exe -q %query% -l %where% -m %mode% -o risultati/%filename%.csv
