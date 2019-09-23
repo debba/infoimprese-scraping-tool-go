@@ -9,4 +9,4 @@ IF NOT DEFINED sleep SET "sleep=1"
 IF NOT DEFINED filename SET "filename=1"
 IF NOT DEFINED mode SET "mode=search_by_name"
 
-./infoimprese -q %query% -l %where% -m %mode% -o risultati/%filename%.csv
+infoimprese.exe -q %query% -l %where% -m %mode% -o risultati/%filename%.csv
