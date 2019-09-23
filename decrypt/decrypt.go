@@ -7,6 +7,7 @@ import (
 )
 
 func GetCaptcha(apiKey string, siteKey string, url string) (string, error) {
+	log.Printf("[CHECKING] captcha (url = %s)", url)
 	log.Printf("[CHECKING] captcha (siteKey = %s, apiKey = %s)", siteKey, apiKey)
 	client := anticaptcha.Client{APIKey: apiKey}
 	captcha, err := client.SendRecaptcha(
