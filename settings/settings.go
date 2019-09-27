@@ -1,21 +1,21 @@
 package settings
 
-type AntiCaptchaConfig = struct {
+type AntiCaptchaConfig struct {
 	ApiKey  string `json:"api_key"`
 	SiteKey string `json:"site_key"`
 }
 
-type ScraperConfig = struct {
+type ScraperConfig struct {
 	Mode   string   `json:"mode"`
 	Fields []string `json:"fields"`
 }
 
-type Config = struct {
+type Config struct {
 	AntiCaptcha AntiCaptchaConfig `json:"anticaptcha"`
 	Scraper     ScraperConfig     `json:"scraper"`
 }
 
-type AutoSetting = struct {
+type AutoSetting struct {
 	Query      string
 	Where      string
 	Mode       string
@@ -26,7 +26,7 @@ type AutoSetting = struct {
 	TotPages   uint64
 }
 
-type AutoQueryParams = struct {
+type AutoQueryParams struct {
 	TipoRicerca  int
 	IndiceFiglio string
 }
