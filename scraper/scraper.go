@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"encoding/csv"
+	"fmt"
 	"github.com/antchfx/htmlquery"
 	"infoimprese-scraping-tool/decrypt"
 	"infoimprese-scraping-tool/request"
@@ -19,47 +20,24 @@ import (
 
 const ApiEndpoint string = "https://www.infoimprese.it/impr"
 
-func SetSearch(query string, where string, config settings.Config, outputFile string) {
+type Scraper struct {
+	settings.AutoQueryParams
+	settings.AutoSetting
+	settings.Config
+	Client *http.Client
+	Writer *csv.Writer
+	Count  uint64
+}
+
+func (s *Scraper) SetSearch(query string, where string, config settings.Config, outputFile string) {
 
 	if config.Scraper.Mode == "" {
 		config.Scraper.Mode = "search_by_name"
 	}
 
-	log.Printf("[SEARCH] Query: %s, Where: %s, OutFile: %s", query, where, outputFile)
+	log.Printf("[SEARCH] \nQuery: %s, \nWhere: %s, \nMode: %s, \nOutFile: %s", query, where, config.Scraper.Mode, outputFile)
 
-	AutoSetting := settings.AutoSetting{Query: query, Mode: config.Scraper.Mode, Where: where, OutputFile: outputFile, ApiKey: config.AntiCaptcha.ApiKey, SiteKey: config.AntiCaptcha.SiteKey}
-
-	var TipoRicerca int
-	var IndiceFiglio string
-
-	switch config.Scraper.Mode {
-	case "search_by_desc":
-		TipoRicerca = 1
-		IndiceFiglio = ""
-	case "with_dash":
-		TipoRicerca = 1
-		IndiceFiglio = "0"
-	case "with_cert":
-		TipoRicerca = 1
-		IndiceFiglio = "1"
-	case "with_ecom":
-		TipoRicerca = 1
-		IndiceFiglio = "2"
-	case "with_email":
-		TipoRicerca = 1
-		IndiceFiglio = "3"
-	case "with_website":
-		TipoRicerca = 1
-		IndiceFiglio = "4"
-	case "with_export":
-		TipoRicerca = 1
-		IndiceFiglio = "5"
-	default:
-		TipoRicerca = 0
-		IndiceFiglio = ""
-	}
-
-	AutoQueryParams := settings.AutoQueryParams{TipoRicerca: TipoRicerca, IndiceFiglio: IndiceFiglio}
+	s.AutoSetting = settings.AutoSetting{Query: query, Mode: config.Scraper.Mode, Where: where, OutputFile: outputFile, ApiKey: config.AntiCaptcha.ApiKey, SiteKey: config.AntiCaptcha.SiteKey}
 
 	jar, _ := cookiejar.New(nil)
 
@@ -68,9 +46,10 @@ func SetSearch(query string, where string, config settings.Config, outputFile st
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
 	}
-	client := &http.Client{Transport: tr, Jar: jar}
+	s.Client = &http.Client{Transport: tr, Jar: jar}
+	s.Config = config
 
-	StartSearch(client, AutoSetting)
+	s.StartSearch()
 
 	file, err := os.Create(outputFile)
 	if err != nil {
@@ -78,18 +57,18 @@ func SetSearch(query string, where string, config settings.Config, outputFile st
 	}
 	defer file.Close()
 
-	w := csv.NewWriter(file)
-	defer w.Flush()
+	s.Writer = csv.NewWriter(file)
+	defer (s.Writer).Flush()
 
-	ScrapePage(client, AutoQueryParams, &AutoSetting, config, w, 1)
+	s.ScrapePage(1)
 
-	for i := uint64(2); i <= AutoSetting.TotPages; i++ {
-		ScrapePage(client, AutoQueryParams, &AutoSetting, config, w, uint(i))
+	for i := uint64(2); i <= s.AutoSetting.TotPages; i++ {
+		s.ScrapePage(uint(i))
 	}
 
 }
 
-func ScrapePage(httpClient *http.Client, autoQueryParams settings.AutoQueryParams, autoSetting *settings.AutoSetting, config settings.Config, w *csv.Writer, page uint) []map[string]string {
+func (s *Scraper) ScrapePage(page uint) []map[string]string {
 	log.Printf("[OPEN PAGE] Page: %s", strconv.Itoa(int(page)))
 	var contacts []map[string]string
 	endpointUrl := ApiEndpoint + "/ricerca/risultati_globale.jsp"
@@ -102,14 +81,14 @@ func ScrapePage(httpClient *http.Client, autoQueryParams settings.AutoQueryParam
 		queryParams = url.Values{
 			"cer":          {"1"},
 			"statistiche":  {"S"},
-			"tipoRicerca":  {strconv.Itoa(autoQueryParams.TipoRicerca)},
-			"indiceFiglio": {autoQueryParams.IndiceFiglio}}
+			"tipoRicerca":  {s.AutoQueryParams.TipoRicerca},
+			"indiceFiglio": {s.AutoQueryParams.IndiceFiglio}}
 	} else {
 		queryParams = url.Values{
 			"pagina":               {"0"},
 			"indice":               {strconv.Itoa(int(page))},
-			"tipoRicerca":          {strconv.Itoa(autoQueryParams.TipoRicerca)},
-			"indiceFiglio":         {autoQueryParams.IndiceFiglio},
+			"tipoRicerca":          {s.AutoQueryParams.TipoRicerca},
+			"indiceFiglio":         {s.AutoQueryParams.IndiceFiglio},
 			"g-recaptcha-response": {""}}
 	}
 
@@ -119,18 +98,18 @@ func ScrapePage(httpClient *http.Client, autoQueryParams settings.AutoQueryParam
 	*/
 
 	if page > 2 {
-		captcha, _ := decrypt.GetCaptcha(autoSetting.ApiKey, autoSetting.SiteKey, endpointUrl)
+		captcha, _ := decrypt.GetCaptcha(s.AutoSetting.ApiKey, s.AutoSetting.SiteKey, endpointUrl)
 		queryParams.Set("g-recaptcha-response", captcha)
 	}
 
-	result, _ := request.PostRequest(httpClient, endpointUrl, queryParams)
+	result, _ := request.PostRequest(s.Client, endpointUrl, queryParams)
 
 	doc, _ := htmlquery.Parse(strings.NewReader(result))
 
 	if page == 1 {
-		tree.CountFromSearch(doc, autoSetting)
-		log.Printf("[TOTAL RESULTS] %d", autoSetting.TotResults)
-		log.Printf("[TOTAL PAGES] %d", autoSetting.TotPages)
+		tree.CountFromSearch(doc, &s.AutoSetting)
+		log.Printf("[TOTAL RESULTS] %d", s.AutoSetting.TotResults)
+		log.Printf("[TOTAL PAGES] %d", s.AutoSetting.TotPages)
 	}
 
 	pages := tree.GetResultPages(doc)
@@ -139,9 +118,9 @@ func ScrapePage(httpClient *http.Client, autoQueryParams settings.AutoQueryParam
 		for index, crawledPage := range pages {
 			log.Printf("[OPEN CONTACT %d] %s", index+1, crawledPage)
 			contactUrl := ApiEndpoint + "/ricerca/" + crawledPage
-			resp, _ := request.GetRequest(httpClient, contactUrl)
+			resp, _ := request.GetRequest(s.Client, contactUrl)
 			docResp, _ := htmlquery.Parse(strings.NewReader(resp))
-			contacts = append(contacts, tree.GetContactByPage(docResp, config.Scraper.Fields))
+			contacts = append(contacts, tree.GetContactByPage(docResp, s.Config.Scraper.Fields))
 		}
 	}
 
@@ -158,10 +137,10 @@ func ScrapePage(httpClient *http.Client, autoQueryParams settings.AutoQueryParam
 		}
 		if index == 0 && page == 1 {
 			log.Printf("[CREATE HEADER] First time")
-			_ = w.Write(headers)
+			_ = s.Writer.Write(headers)
 		}
 		if row != nil {
-			_ = w.Write(row)
+			_ = s.Writer.Write(row)
 		}
 	}
 
@@ -169,14 +148,27 @@ func ScrapePage(httpClient *http.Client, autoQueryParams settings.AutoQueryParam
 
 }
 
-func StartSearch(httpClient *http.Client, autoSetting settings.AutoSetting) {
+func (s *Scraper) StartSearch() {
 	endpointUrl := ApiEndpoint + "/ricerca/lista_globale.jsp"
-	captcha, _ := decrypt.GetCaptcha(autoSetting.ApiKey, autoSetting.SiteKey, endpointUrl)
-	_, _ = request.PostRequest(httpClient, endpointUrl, url.Values{
+	captcha, _ := decrypt.GetCaptcha(s.AutoSetting.ApiKey, s.AutoSetting.SiteKey, endpointUrl)
+	result, _ := request.PostRequest(s.Client, endpointUrl, url.Values{
 		"cer":                  {"1"},
 		"pagina":               {"0"},
 		"flagDove":             {"true"},
-		"dove":                 {autoSetting.Where},
-		"ricerca":              {autoSetting.Query},
+		"dove":                 {s.AutoSetting.Where},
+		"ricerca":              {s.AutoSetting.Query},
 		"g-recaptcha-response": {captcha}})
+
+	doc, _ := htmlquery.Parse(strings.NewReader(result))
+	searchFilterMap := tree.GenerateSearchFilterMap(doc)
+	mySearchFilters := searchFilterMap[s.Config.Scraper.Mode]
+	s.Count = mySearchFilters.Count
+	s.AutoQueryParams.TipoRicerca = mySearchFilters.AutoQueryParams.TipoRicerca
+	s.AutoQueryParams.IndiceFiglio = mySearchFilters.AutoQueryParams.IndiceFiglio
+
+	if s.Count == 0 {
+		fmt.Println("[ERROR] For the selected mode, no contacts were found.")
+		os.Exit(0)
+	}
+
 }

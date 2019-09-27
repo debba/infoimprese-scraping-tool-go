@@ -27,6 +27,11 @@ type AutoSetting struct {
 }
 
 type AutoQueryParams struct {
-	TipoRicerca  int
+	TipoRicerca  string
 	IndiceFiglio string
+}
+
+type SearchFilterMap struct {
+	AutoQueryParams
+	Count uint64
 }

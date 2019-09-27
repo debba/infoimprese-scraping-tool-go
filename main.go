@@ -45,6 +45,7 @@ func main() {
 
 	config.Scraper.Mode = *mode
 
-	scraper.SetSearch(*query, *where, config, *output)
+	sc := &scraper.Scraper{}
+	sc.SetSearch(*query, *where, config, *output)
 
 }

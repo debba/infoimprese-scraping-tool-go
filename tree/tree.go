@@ -92,3 +92,63 @@ func GetContactByPage(tree *html.Node, fields []string) map[string]string {
 	return CreateContact(fields, tree)
 
 }
+
+func GenerateSearchFilterMap(tree *html.Node) map[string]settings.SearchFilterMap {
+
+	var xpath string
+
+	assocMap := map[string]string{
+		"Nome":                      "search_by_name",
+		"Descrizione attività":      "search_by_desc",
+		"Vetrina":                   "with_dash",
+		"certificazione di qualità": "with_cert",
+		"e-commerce":                "with_ecom",
+		"e-mail":                    "with_email",
+		"sito internet":             "with_website",
+		"export":                    "with_export"}
+
+	returnMap := make(map[string]settings.SearchFilterMap)
+
+	for index, mode := range assocMap {
+		xpath = "//tr[contains(td/font/b/text(), '" + index + "')]"
+
+		rowExists := htmlquery.FindOne(tree, xpath)
+
+		autoQueryParams := settings.AutoQueryParams{
+			IndiceFiglio: "",
+			TipoRicerca:  "0"}
+		countModeValue := uint64(0)
+
+		if rowExists != nil {
+
+			/**
+			Get count from mode
+			*/
+
+			countMode := htmlquery.FindOne(tree, xpath+"/td[4]")
+			if countMode != nil {
+				countModeValue, _ = strconv.ParseUint(strings.TrimSpace(htmlquery.InnerText(countMode)), 10, 32)
+			}
+
+			/*
+				Get IndiceFiglio / TipoRicerca
+			*/
+
+			getFunc := htmlquery.FindOne(tree, xpath+"/td[5]/a[1]/@onclick")
+
+			if getFunc != nil {
+				getFuncValue := htmlquery.InnerText(getFunc)
+				getFuncValue = getFuncValue[7 : len(getFuncValue)-15]
+				s := strings.Split(getFuncValue, ",")
+				autoQueryParams.IndiceFiglio = s[1]
+				autoQueryParams.TipoRicerca = s[0]
+			}
+		}
+		returnMap[mode] = settings.SearchFilterMap{
+			AutoQueryParams: autoQueryParams,
+			Count:           countModeValue,
+		}
+	}
+
+	return returnMap
+}
