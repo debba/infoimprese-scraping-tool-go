@@ -1,7 +1,7 @@
 package decrypt
 
 import (
-	"github.com/nuveo/anticaptcha"
+	"github.com/debba/anticaptcha"
 	"log"
 	"time"
 )

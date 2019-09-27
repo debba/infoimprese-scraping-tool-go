@@ -23,7 +23,7 @@ run:
 deps:
 		$(GOGET) github.com/antchfx/htmlquery
 		$(GOGET) github.com/akamensky/argparse
-		$(GOGET) github.com/nuveo/anticaptcha
+		$(GOGET) github.com/debba/anticaptcha
 
 
 
