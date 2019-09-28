@@ -21,9 +21,9 @@ import (
 const ApiEndpoint string = "https://www.infoimprese.it/impr"
 
 type Scraper struct {
-	settings.AutoQueryParams
-	settings.AutoSetting
-	settings.Config
+	*settings.AutoQueryParams
+	*settings.AutoSetting
+	*settings.Config
 	Client *http.Client
 	Writer *csv.Writer
 	Count  uint64
@@ -37,7 +37,7 @@ func (s *Scraper) SetSearch(query string, where string, config settings.Config, 
 
 	log.Printf("[SEARCH] \nQuery: %s, \nWhere: %s, \nMode: %s, \nOutFile: %s", query, where, config.Scraper.Mode, outputFile)
 
-	s.AutoSetting = settings.AutoSetting{Query: query, Mode: config.Scraper.Mode, Where: where, OutputFile: outputFile, ApiKey: config.AntiCaptcha.ApiKey, SiteKey: config.AntiCaptcha.SiteKey}
+	s.AutoSetting = &settings.AutoSetting{Query: query, Mode: config.Scraper.Mode, Where: where, OutputFile: outputFile, ApiKey: config.AntiCaptcha.ApiKey, SiteKey: config.AntiCaptcha.SiteKey}
 
 	jar, _ := cookiejar.New(nil)
 
@@ -47,7 +47,7 @@ func (s *Scraper) SetSearch(query string, where string, config settings.Config, 
 		DisableCompression: true,
 	}
 	s.Client = &http.Client{Transport: tr, Jar: jar}
-	s.Config = config
+	s.Config = &config
 
 	s.StartSearch()
 
@@ -107,7 +107,7 @@ func (s *Scraper) ScrapePage(page uint) []map[string]string {
 	doc, _ := htmlquery.Parse(strings.NewReader(result))
 
 	if page == 1 {
-		tree.CountFromSearch(doc, &s.AutoSetting)
+		tree.CountFromSearch(doc, s.AutoSetting)
 		log.Printf("[TOTAL RESULTS] %d", s.AutoSetting.TotResults)
 		log.Printf("[TOTAL PAGES] %d", s.AutoSetting.TotPages)
 	}
