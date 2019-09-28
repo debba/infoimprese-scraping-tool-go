@@ -162,9 +162,9 @@ func (s *Scraper) StartSearch() {
 	doc, _ := htmlquery.Parse(strings.NewReader(result))
 	searchFilterMap := tree.GenerateSearchFilterMap(doc)
 	mySearchFilters := searchFilterMap[s.Config.Scraper.Mode]
+
 	s.Count = mySearchFilters.Count
-	s.AutoQueryParams.TipoRicerca = mySearchFilters.AutoQueryParams.TipoRicerca
-	s.AutoQueryParams.IndiceFiglio = mySearchFilters.AutoQueryParams.IndiceFiglio
+	s.AutoQueryParams = &mySearchFilters.AutoQueryParams
 
 	if s.Count == 0 {
 		fmt.Println("[ERROR] For the selected mode, no contacts were found.")
