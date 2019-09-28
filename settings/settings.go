@@ -1,8 +1,9 @@
 package settings
 
 type AntiCaptchaConfig struct {
-	ApiKey  string `json:"api_key"`
-	SiteKey string `json:"site_key"`
+	ApiKey        string `json:"api_key"`
+	SiteKey       string `json:"site_key"`
+	MinimumAmount string `json:"minimum_amount"`
 }
 
 type ScraperConfig struct {
@@ -16,14 +17,15 @@ type Config struct {
 }
 
 type AutoSetting struct {
-	Query      string
-	Where      string
-	Mode       string
-	OutputFile string
-	ApiKey     string
-	SiteKey    string
-	TotResults uint64
-	TotPages   uint64
+	Query         string
+	Where         string
+	Mode          string
+	OutputFile    string
+	ApiKey        string
+	SiteKey       string
+	MinimumAmount float64
+	TotResults    uint64
+	TotPages      uint64
 }
 
 type AutoQueryParams struct {

@@ -37,7 +37,8 @@ func (s *Scraper) SetSearch(query string, where string, config settings.Config, 
 
 	log.Printf("[SEARCH] \nQuery: %s, \nWhere: %s, \nMode: %s, \nOutFile: %s", query, where, config.Scraper.Mode, outputFile)
 
-	s.AutoSetting = &settings.AutoSetting{Query: query, Mode: config.Scraper.Mode, Where: where, OutputFile: outputFile, ApiKey: config.AntiCaptcha.ApiKey, SiteKey: config.AntiCaptcha.SiteKey}
+	minimumAmount, _ := strconv.ParseFloat(config.AntiCaptcha.MinimumAmount, 10)
+	s.AutoSetting = &settings.AutoSetting{Query: query, Mode: config.Scraper.Mode, Where: where, OutputFile: outputFile, ApiKey: config.AntiCaptcha.ApiKey, SiteKey: config.AntiCaptcha.SiteKey, MinimumAmount: minimumAmount}
 
 	jar, _ := cookiejar.New(nil)
 
@@ -98,7 +99,7 @@ func (s *Scraper) ScrapePage(page uint) []map[string]string {
 	*/
 
 	if page > 2 {
-		captcha, _ := decrypt.GetCaptcha(s.AutoSetting.ApiKey, s.AutoSetting.SiteKey, endpointUrl)
+		captcha, _ := decrypt.GetCaptcha(*s.AutoSetting, endpointUrl)
 		queryParams.Set("g-recaptcha-response", captcha)
 	}
 
@@ -150,7 +151,7 @@ func (s *Scraper) ScrapePage(page uint) []map[string]string {
 
 func (s *Scraper) StartSearch() {
 	endpointUrl := ApiEndpoint + "/ricerca/lista_globale.jsp"
-	captcha, _ := decrypt.GetCaptcha(s.AutoSetting.ApiKey, s.AutoSetting.SiteKey, endpointUrl)
+	captcha, _ := decrypt.GetCaptcha(*s.AutoSetting, endpointUrl)
 	result, _ := request.PostRequest(s.Client, endpointUrl, url.Values{
 		"cer":                  {"1"},
 		"pagina":               {"0"},

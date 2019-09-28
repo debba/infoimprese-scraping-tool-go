@@ -1,7 +1,8 @@
 {
   "anticaptcha": {
     "api_key": "",
-    "site_key": ""
+    "site_key": "",
+    "minimum_amount": 1.0
   },
   "scraper": {
     "mode": "search_by_name",
